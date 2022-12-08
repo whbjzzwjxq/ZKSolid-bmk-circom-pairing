@@ -8,6 +8,7 @@ include "./fp.circom";
 include "./fp2.circom";
 include "./fp12.circom";
 include "./curve.circom";
+include "./pairing.circom";
 
 // requires a[0] != b[0]
 //
@@ -492,7 +493,6 @@ template MillerLoop1(n, k, b, r, q){
     component nocarry[BitLength];
     component Padd[SigBits];
     component fadd[SigBits]; 
-    component fadd_pre[SigBits]; 
     var curid=0;
 
     for(var i=BitLength - 1; i>=0; i--){

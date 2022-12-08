@@ -1,5 +1,8 @@
 pragma circom 2.0.3;
 
+include "field_elements_func.circom";
+include "bigint_func.circom";
+
 function find_Fp12_sum(n, k, a, b, p) {
     var out[6][2][50];
     for(var i=0; i<6; i++)

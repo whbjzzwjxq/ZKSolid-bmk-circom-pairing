@@ -1,5 +1,7 @@
 pragma circom 2.0.3;
 
+include "bigint_func.circom";
+
 function get_fp_sgn0(a){
     return a[0] % 2; 
 }
@@ -151,9 +153,9 @@ function get_signed_Fp2_carry_witness(n, k, m, a, p){
 
 
 function get_fp2_sgn0(k, a){
-    var z = long_is_zero(k, a[0]);
     var sgn0 = a[0][0] % 2;
     var sgn1 = a[1][0] % 2;
+    var z = long_is_zero(k, a[0]);
     return sgn0 | (z & sgn1);
 }
 

@@ -52,7 +52,7 @@ template PolynomialReduce(l) {
         quotient[i] <-- residue[i+l];
         residue[i+l] = 0;
     }
-    component mult = BigMultShortLong(1, l+1);
+    component mult = BigMultShortLong(1, l+1, 0);
     for (var i = 0; i < l-1; i ++) {
         mult.a[i] <== quotient[i];
         mult.b[i] <== poly[i];
@@ -252,11 +252,11 @@ template Fp2multiplyNoCarry(n, k){
     signal input p[k];
     signal output out[2][2*k-1];
     
-    component a0b0 = BigMultShortLong(n, k);
-    component a1b1 = BigMultShortLong(n, k);
-    component pb1 = BigMultShortLong(n, k); 
-    component a0b1 = BigMultShortLong(n, k); 
-    component a1b0 = BigMultShortLong(n, k);
+    component a0b0 = BigMultShortLong(n, k, 0);
+    component a1b1 = BigMultShortLong(n, k, 0);
+    component pb1 = BigMultShortLong(n, k, 0); 
+    component a0b1 = BigMultShortLong(n, k, 0); 
+    component a1b0 = BigMultShortLong(n, k, 0);
     
     for(var i=0; i<k; i++){
         a0b0.a[i] <== a[0][i];
@@ -279,87 +279,6 @@ template Fp2multiplyNoCarry(n, k){
         out[0][i] <== a0b0.out[i] + pb1.out[i] - a1b1.out[i];
         out[1][i] <== a0b1.out[i] + a1b0.out[i];
     }
-}
-
-// multiplication specialized to Fp^2 
-// (a0 + a1 u)*(b0 + b1 u) = (a0*b0 - a1*b1) + (a0*b1 + a1*b0)u
-template Fp2multiply(n, k){
-    signal input a[2][k];
-    signal input b[2][k];
-    signal input p[k];
-    signal output out[2][k];
-
-    var LOGK = log_ceil(k);
-    assert(2*n + 1 + LOGK<254);
-
-    var Xvar[2][2][20] = Fp2prod(n, k, a, b, p); 
-    component range_checks[2][k];
-    component lt[2];
-    signal X[2][k+2]; 
-    component X_range_checks[2][k+2];
-    
-    for(var eps=0; eps<2; eps++){
-        lt[eps] = BigLessThan(n, k);
-        for(var i=0; i<k; i++){
-            out[eps][i] <-- Xvar[eps][1][i];
-            range_checks[eps][i] = Num2Bits(n);
-            range_checks[eps][i].in <== out[eps][i];
-            
-            lt[eps].a[i] <== out[eps][i];
-            lt[eps].b[i] <== p[i];
-        }
-        lt[eps].out === 1;
-        
-        for(var i=0; i<k+2; i++){
-            X[eps][i] <-- Xvar[eps][0][i];
-            X_range_checks[eps][i] = Num2Bits(n);
-            X_range_checks[eps][i].in <== X[eps][i];
-        }
-        
-    }
-
-    
-    // out[0] constraint: X = X[0], Y = out[0] 
-    // constrain by Carry( a0 *' b0 +' p *' b1 -' a1 *' b1 - p *' X - Y ) = 0 
-    // where all operations are performed without carry 
-    // each register is an overflow representation in the range (-k*2^{2n+1}-2^n, k*2^{2n + 1} )
-    //                                          which is inside (-2^{2n+1+LOGK}, 2^{2n+1+LOGK})
-
-    // out[1] constraint: X = X[1], Y = out[1]
-    // constrain by Carry( a0 *' b1 +' a1 *' b0 -' p *' X - Y) = 0 
-    // each register is an overflow representation in the range (-k*2^{2n}-2^n, k*2^{2n + 1} )
-    //                                          which is inside (-2^{2n+1+LOGK}, 2^{2n+1+LOGK})
-    
-    component ab = Fp2multiplyNoCarry(n, k); 
-    for(var i=0; i<k; i++){
-        ab.p[i] <== p[i];
-        ab.a[0][i] <== a[0][i];
-        ab.a[1][i] <== a[1][i];
-        ab.b[0][i] <== b[0][i];
-        ab.b[1][i] <== b[1][i];
-    }
-    component pX[2];
-    component carry_check[2];
-    for(var eps=0; eps<2; eps++){
-        pX[eps] = BigMultShortLong(n, k+2); // 2*k+3 registers
-        for(var i=0; i<k; i++){
-            pX[eps].a[i] <== p[i];
-            pX[eps].b[i] <== X[eps][i];
-        }
-        for(var i=k; i<k+2; i++){
-            pX[eps].a[i] <== 0;
-            pX[eps].b[i] <== X[eps][i];
-        }
-
-        carry_check[eps] = CheckCarryToZero(n, 2*n+2+LOGK, 2*k+3); 
-        for(var i=0; i<k; i++)
-            carry_check[eps].in[i] <== ab.out[eps][i] - pX[eps].out[i] - out[eps][i]; 
-        for(var i=k; i<2*k-1; i++)
-            carry_check[eps].in[i] <== ab.out[eps][i] - pX[eps].out[i]; 
-        for(var i=2*k-1; i<2*k+3; i++)
-            carry_check[eps].in[i] <== -pX[eps].out[i];
-    }
-
 }
 
 
@@ -648,8 +567,8 @@ template Fp12MultiplyThree(n, k, p) {
     component p_prod_real0[l];
     component p_prod_imag0[l];
     for (var i = 0; i < l; i ++) {
-        p_prod_real0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4);
-        p_prod_imag0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4);
+        p_prod_real0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4, 0);
+        p_prod_imag0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4, 0);
 
 	for (var j = 0; j < k; j++) {
 	    p_prod_real0[i].a[j] <== p[j];

@@ -6,3 +6,7 @@ pot*.ptau
 *~
 **/node_modules/
 **/.DS_STORE
+
+package-lock.json
+.vscode
+yarn.lock

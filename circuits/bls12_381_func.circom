@@ -1,5 +1,6 @@
 pragma circom 2.0.3;
 
+include "bigint_func.circom";
 
 function get_BLS12_381_parameter(){
     return 15132376222941642752;
