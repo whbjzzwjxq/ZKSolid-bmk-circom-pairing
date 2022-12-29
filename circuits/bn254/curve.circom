@@ -26,7 +26,7 @@ template EllipticCurveScalarMultiplySignalX(n, k, b, p){
     Bits.in <== x;
 
     signal R[BitLength + 1][2][k]; 
-    signal R_isO[BitLength + 1];
+    signal RisO[BitLength + 1];
     signal addendum[BitLength][2][k];
     component Pdouble[BitLength];
     component Padd[BitLength];
@@ -41,7 +41,7 @@ template EllipticCurveScalarMultiplySignalX(n, k, b, p){
             R[BitLength][j][idx] <== P[j][idx];
         }
     }
-    R_isO[BitLength] <== 1;
+    RisO[BitLength] <== 1;
 
     for (var i = BitLength - 1;i >= 0;i--) {
         // E(Fp) has no points of order 2, so the only way 2*R[i+1] = O is if R[i+1] = O 
@@ -65,16 +65,16 @@ template EllipticCurveScalarMultiplySignalX(n, k, b, p){
                 Padd[i].b[j][idx] <== addendum[i][j][idx];
             }
         }
-        Padd[i].aIsInfinity <== R_isO[i+1];
+        Padd[i].aIsInfinity <== RisO[i+1];
         Padd[i].bIsInfinity <== 1 - Bits.out[i];
 
-        R_isO[i] <== Padd[i].isInfinity; 
+        RisO[i] <== Padd[i].isInfinity; 
         for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
             R[i][j][idx] <== Padd[i].out[j][idx];
     }
 
     // output = O if input = O or R[0] = O 
-    isInfinity <== inIsInfinity + R_isO[0] - inIsInfinity * R_isO[0];
+    isInfinity <== inIsInfinity + RisO[0] - inIsInfinity * RisO[0];
     for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++)
         out[i][idx] <== R[0][i][idx] + isInfinity * (in[i][idx] - R[0][i][idx]);
 }

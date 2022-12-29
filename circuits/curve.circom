@@ -390,7 +390,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
     }
 
     signal R[BitLength][2][k]; 
-    signal R_isO[BitLength]; 
+    signal RisO[BitLength]; 
     component Pdouble[BitLength];
     component Padd[SigBits];
     var curid=0;
@@ -404,7 +404,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
         if( i == BitLength - 1 ){
             for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
                 R[i][j][idx] <== P[j][idx];
-            R_isO[i] <== 0; 
+            RisO[i] <== 0; 
         }else{
             // E(Fp) has no points of order 2, so the only way 2*R[i+1] = O is if R[i+1] = O 
             Pdouble[i] = EllipticCurveDouble(n, k, 0, b, p);  
@@ -414,7 +414,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
             if(Bits[i] == 0){
                 for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
                     R[i][j][idx] <== Pdouble[i].out[j][idx];
-                R_isO[i] <== R_isO[i+1]; 
+                RisO[i] <== RisO[i+1]; 
             }else{
                 // Padd[curid] = Pdouble[i] + P 
                 Padd[curid] = EllipticCurveAdd(n, k, 0, b, p); 
@@ -422,10 +422,10 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
                     Padd[curid].a[j][idx] <== Pdouble[i].out[j][idx]; 
                     Padd[curid].b[j][idx] <== P[j][idx];
                 }
-                Padd[curid].aIsInfinity <== R_isO[i+1];
+                Padd[curid].aIsInfinity <== RisO[i+1];
                 Padd[curid].bIsInfinity <== 0;
 
-                R_isO[i] <== Padd[curid].isInfinity; 
+                RisO[i] <== Padd[curid].isInfinity; 
                 for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
                     R[i][j][idx] <== Padd[curid].out[j][idx];
                 
@@ -434,7 +434,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
         }
     }
     // output = O if input = O or R[0] = O 
-    isInfinity <== inIsInfinity + R_isO[0] - inIsInfinity * R_isO[0];
+    isInfinity <== inIsInfinity + RisO[0] - inIsInfinity * RisO[0];
     for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++)
         out[i][idx] <== R[0][i][idx] + isInfinity * (in[i][idx] - R[0][i][idx]);
 }

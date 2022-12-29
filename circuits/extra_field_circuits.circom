@@ -61,18 +61,18 @@ template PolynomialReduce(l) {
     mult.a[l] <== 0;
     mult.b[l-1] <== poly[l-1];
     mult.b[l] <== 1;
-    signal a_out[2*l-1];
+    signal aout[2*l-1];
     for (var i = 0; i < 2*l-1; i++) {
-        a_out[i] <== mult.out[i];
+        aout[i] <== mult.out[i];
     }
     for (var i = 0; i < l; i ++ ) {
         out[i] <-- residue[i];
     }
     for (var i = 0; i < l; i ++) {
-        a[i] === a_out[i] + out[i];
+        a[i] === aout[i] + out[i];
     }
     for (var i = l; i < 2*l-1; i ++) {
-        a[i] === a_out[i];
+        a[i] === aout[i];
     }
 }
 

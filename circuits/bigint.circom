@@ -81,13 +81,13 @@ template ModSubThree(n) {
     assert(a - b - c + (1 << n) >= 0);
     signal output out;
     signal output borrow;
-    signal b_plus_c;
-    b_plus_c <== b + c;
+    signal bplusc;
+    bplusc <== b + c;
     component lt = LessThan(n + 1);
     lt.in[0] <== a;
-    lt.in[1] <== b_plus_c;
+    lt.in[1] <== bplusc;
     borrow <== lt.out;
-    out <== borrow * (1 << n) + a - b_plus_c;
+    out <== borrow * (1 << n) + a - bplusc;
 }
 
 template ModSumThree(n) {
